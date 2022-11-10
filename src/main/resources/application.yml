@@ -16,3 +16,11 @@ spring:
   batch:
     jdbc:
       initialize-schema: always
+    job:
+      enabled: false
+
+logging:
+  level:
+    org:
+      springframework:
+        web: debug
