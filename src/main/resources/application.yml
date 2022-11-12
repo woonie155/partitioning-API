@@ -17,10 +17,8 @@ spring:
     jdbc:
       initialize-schema: always
     job:
-      enabled: false
+      names: ${job.name:NONE}
+      enabled: true
 
-logging:
-  level:
-    org:
-      springframework:
-        web: debug
+
+
