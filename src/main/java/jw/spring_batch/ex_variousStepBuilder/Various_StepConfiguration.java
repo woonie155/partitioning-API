@@ -18,7 +18,7 @@ import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
-@Configuration
+//@Configuration
 public class Various_StepConfiguration {
 
 
