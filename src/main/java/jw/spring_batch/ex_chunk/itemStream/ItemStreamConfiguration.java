@@ -24,7 +24,7 @@ import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
-@Configuration
+//@Configuration
 public class ItemStreamConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
