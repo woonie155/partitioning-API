@@ -1,6 +1,9 @@
-package jw.spring_batch.ex_chunk.custom;
+package jw.spring_batch.ex_chunk.itemStream;
 
-
+import jw.spring_batch.ex_chunk.custom.CustomItemProcessor;
+import jw.spring_batch.ex_chunk.custom.CustomItemReader;
+import jw.spring_batch.ex_chunk.custom.CustomItemWriter;
+import jw.spring_batch.ex_chunk.custom.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -16,12 +19,13 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
-//@Configuration
-public class CustomChunkConfiguration {
+@Configuration
+public class ItemStreamConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -29,7 +33,6 @@ public class CustomChunkConfiguration {
     @Bean
     public Job batchJob(){
         return jobBuilderFactory.get("batchJob1")
-                .incrementer(new RunIdIncrementer())
                 .start(step1())
                 .next(step2())
                 .build();
@@ -40,11 +43,22 @@ public class CustomChunkConfiguration {
     @JobScope
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<Item, Item>chunk(2)
+                .<String, String>chunk(2)
                 .reader(itemReader())
-                .processor(itemProcessor())
                 .writer(itemWriter())
                 .build();
+    }
+
+    public CustomItemStreamReader itemReader(){
+        List<String> items = new ArrayList<>(10);
+        for(int i=0; i<10; i++){
+            items.add(String.valueOf(i));
+        }
+        return new CustomItemStreamReader(items);
+    }
+    @Bean
+    public ItemWriter<? super String> itemWriter(){
+        return new CustomItemStreamWriter();
     }
 
 
@@ -56,20 +70,5 @@ public class CustomChunkConfiguration {
                     return RepeatStatus.FINISHED;
                 })
                 .build();
-    }
-
-    @Bean
-    public ItemReader<Item> itemReader(){
-        return new CustomItemReader(Arrays.asList(new Item("user1"),
-                new Item("user2"),
-                new Item("user3")));
-    }
-    @Bean
-    public ItemProcessor<? super Item, ? extends Item> itemProcessor() {
-        return new CustomItemProcessor();
-    }
-    @Bean
-    public ItemWriter<? super Item> itemWriter() {
-        return new CustomItemWriter();
     }
 }
