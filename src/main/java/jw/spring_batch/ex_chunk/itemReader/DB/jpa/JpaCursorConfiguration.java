@@ -1,7 +1,6 @@
-package jw.spring_batch.ex_chunk.itemReader.DB.jdbc;
+package jw.spring_batch.ex_chunk.itemReader.DB.jpa;
 
 import jw.spring_batch.ex_chunk.itemReader.Customer;
-import jw.spring_batch.ex_chunk.itemReader.flatFileItem.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -9,31 +8,34 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
-import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
-import org.springframework.batch.item.json.JacksonJsonObjectReader;
-import org.springframework.batch.item.json.builder.JsonItemReaderBuilder;
+import org.springframework.batch.item.database.JpaCursorItemReader;
+import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
 
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-//@Configuration
-public class JdbcCursorConfiguration {
+@Configuration
+public class JpaCursorConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final DataSource dataSource;
+    private final EntityManagerFactory entityManagerFactory;
 
     @Bean
     public Job batchJob(){
         return jobBuilderFactory.get("batchJob1")
+                .incrementer(new RunIdIncrementer())
                 .start(step1())
                 .next(step2())
                 .build();
@@ -49,14 +51,15 @@ public class JdbcCursorConfiguration {
                 .build();
     }
     @Bean
-    public ItemReader<Customer> customItemReader(){
-        return new JdbcCursorItemReaderBuilder<Customer>()
-                .name("jdbcCursor")
-                .fetchSize(3)
-                .sql("select id, first_name, last_name, birth_date from customer where first_name like ? order by last_name, first_name")
-                .beanRowMapper(Customer.class)
-                .queryArguments("%")
-                .dataSource(dataSource)
+    public JpaCursorItemReader<Customer> customItemReader(){
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("firstname", "A%");
+
+        return new JpaCursorItemReaderBuilder()
+                .name("JpaCursor")
+                .entityManagerFactory(entityManagerFactory)
+                .queryString("select c from Customer c where firstName like :firstname")
+                .parameterValues(parameters)
                 .build();
     }
 
