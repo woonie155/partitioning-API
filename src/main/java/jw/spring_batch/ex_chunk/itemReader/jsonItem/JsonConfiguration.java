@@ -23,7 +23,7 @@ import org.springframework.core.io.FileSystemResource;
 
 @Slf4j
 @RequiredArgsConstructor
-@Configuration
+//@Configuration
 public class JsonConfiguration {
 
 

@@ -1,6 +1,7 @@
 package jw.spring_batch.ex_chunk.itemReader.DB.jdbc;
 
 import jw.spring_batch.ex_chunk.itemReader.Customer;
+import jw.spring_batch.ex_chunk.itemReader.Customer3;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -13,6 +14,7 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JdbcPagingItemReader;
 import org.springframework.batch.item.database.Order;
 import org.springframework.batch.item.database.PagingQueryProvider;
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuilder;
 import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -26,7 +28,7 @@ import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-//@Configuration
+@Configuration
 public class JdbcPagingConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -45,7 +47,7 @@ public class JdbcPagingConfiguration {
     @JobScope
     public Step step1() throws Exception {
         return stepBuilderFactory.get("step1")
-                .<Customer, Customer>chunk(10)
+                .<Customer, Customer3>chunk(10)
                 .reader(customItemReader())
                 .writer(customItemWriter())
                 .build();
@@ -82,11 +84,12 @@ public class JdbcPagingConfiguration {
 
 
     @Bean
-    public ItemWriter<Customer> customItemWriter(){
-        return items ->{
-            for(Customer u : items) log.info("write: {}", u);
-            log.info("write: 청크단위 종료");
-        };
+    public ItemWriter customItemWriter(){
+        return new JdbcBatchItemWriterBuilder()
+                .dataSource(dataSource)
+                .sql("insert into customer3 values (:id, :firstName, :lastName, :birthDate)")
+                .beanMapped()
+                .build();
     }
 
 
