@@ -12,6 +12,7 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.adapter.ItemReaderAdapter;
+import org.springframework.batch.item.adapter.ItemWriterAdapter;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Slf4j
 @RequiredArgsConstructor
-//@Configuration
+@Configuration
 public class ItemReaderAdapterConfiguration {
 
 
@@ -52,18 +53,16 @@ public class ItemReaderAdapterConfiguration {
         return reader;
     }
     @Bean
-    public Object customService(){
+    public CustomService customService(){
         return new CustomService();
     }
 
-
-
     @Bean
     public ItemWriter<String> customItemWriter(){
-        return items ->{
-            for(String s : items) log.info("write: {}", s);
-            log.info("write: 청크단위 종료");
-        };
+        ItemWriterAdapter<String> writer = new ItemWriterAdapter<>();
+        writer.setTargetObject(customService());
+        writer.setTargetMethod("customWrite");
+        return writer;
     }
 
 

@@ -26,7 +26,7 @@ import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-@Configuration
+//@Configuration
 public class JpaCursorConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
