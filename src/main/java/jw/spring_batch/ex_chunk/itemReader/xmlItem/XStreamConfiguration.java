@@ -5,7 +5,7 @@ import com.thoughtworks.xstream.security.AnyTypePermission;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.oxm.xstream.XStreamMarshaller;
 
-@Configuration
+//@Configuration
 public class XStreamConfiguration {
 
     public XStreamConfiguration(XStreamMarshaller marshaller) {

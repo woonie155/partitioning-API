@@ -1,4 +1,4 @@
-package jw.spring_batch.ex_chunk.itemReader.xmlItem;
+package jw.spring_batch.ex_chunk.itemReader.jsonItem;
 
 import jw.spring_batch.ex_chunk.itemReader.flatFileItem.User;
 import lombok.RequiredArgsConstructor;
@@ -8,22 +8,21 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.xml.StaxEventItemReader;
-import org.springframework.batch.item.xml.builder.StaxEventItemReaderBuilder;
+import org.springframework.batch.item.json.JacksonJsonObjectReader;
+import org.springframework.batch.item.json.builder.JsonItemReaderBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.oxm.xstream.XStreamMarshaller;
 
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-//@Configuration
-public class XMLConfiguration {
+@Configuration
+public class JsonConfiguration {
+
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -36,7 +35,6 @@ public class XMLConfiguration {
                 .build();
     }
 
-
     @Bean
     @JobScope
     public Step step1() {
@@ -47,27 +45,14 @@ public class XMLConfiguration {
                 .build();
     }
     @Bean
-    public StaxEventItemReader<User> customItemReader(){
-        return new StaxEventItemReaderBuilder<User>()
-                .name("staxXML")
-                .resource(new ClassPathResource("user3.xml"))
-                .addFragmentRootElements("user")
-                .unmarshaller(itemUnMarshaller())
+    public ItemReader<User> customItemReader(){
+        return new JsonItemReaderBuilder<User>()
+                .name("json1")
+                .resource(new ClassPathResource("/user4.json"))
+                .jsonObjectReader(new JacksonJsonObjectReader<>(User.class))
                 .build();
     }
 
-    @Bean
-    public XStreamMarshaller itemUnMarshaller(){
-        Map<String, Class<?>> aliases = new HashMap<>();
-        aliases.put("user", User.class);
-        aliases.put("name", String.class);
-        aliases.put("age", Integer.class);
-        aliases.put("year", String.class);
-
-        XStreamMarshaller xStreamMarshaller = new XStreamMarshaller();
-        xStreamMarshaller.setAliases(aliases);
-        return xStreamMarshaller;
-    }
 
     @Bean
     public ItemWriter<User> customItemWriter(){
