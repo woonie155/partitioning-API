@@ -1,6 +1,7 @@
 package jw.spring_batch.ex_chunk.itemReader.DB.jpa;
 
 import jw.spring_batch.ex_chunk.itemReader.Customer;
+import jw.spring_batch.ex_chunk.itemReader.Customer3;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -9,10 +10,11 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.database.JpaCursorItemReader;
+import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder;
+import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +26,7 @@ import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-//@Configuration
+@Configuration
 public class JpaCursorConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
@@ -45,11 +47,13 @@ public class JpaCursorConfiguration {
     @JobScope
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<Customer, Customer>chunk(3)
+                .<Customer, Customer3>chunk(3)
                 .reader(customItemReader())
+                .processor(customItemProcessor())
                 .writer(customItemWriter())
                 .build();
     }
+
     @Bean
     public JpaCursorItemReader<Customer> customItemReader(){
         Map<String, Object> parameters = new HashMap<>();
@@ -63,13 +67,17 @@ public class JpaCursorConfiguration {
                 .build();
     }
 
+    @Bean
+    public ItemProcessor<? super Customer,? extends Customer3> customItemProcessor() {
+        return new CustomItemProcessor();
+    }
+
 
     @Bean
-    public ItemWriter<Customer> customItemWriter(){
-        return items ->{
-            for(Customer u : items) log.info("write: {}", u);
-            log.info("write: 청크단위 종료");
-        };
+    public JpaItemWriter<Customer3> customItemWriter(){
+        return new JpaItemWriterBuilder<Customer3>()
+                .entityManagerFactory(entityManagerFactory)
+                .build();
     }
 
 

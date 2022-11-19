@@ -28,7 +28,7 @@ import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-@Configuration
+//@Configuration
 public class JdbcPagingConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;

@@ -15,7 +15,7 @@ import javax.persistence.Id;
 public class Customer3 {
     @Id
     @GeneratedValue
-    private int id;
+    private Long id;
     private String firstName;
     private String lastName;
     private String birthDate;
