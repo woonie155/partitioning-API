@@ -1,5 +1,6 @@
-package jw.spring_batch.ex_chunk.itemReader.jsonItem;
+package jw.spring_batch.ex_chunk.itemReader.DB.jdbc;
 
+import jw.spring_batch.ex_chunk.itemReader.Customer;
 import jw.spring_batch.ex_chunk.itemReader.flatFileItem.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,8 @@ import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JdbcCursorItemReader;
+import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
 import org.springframework.batch.item.json.JacksonJsonObjectReader;
 import org.springframework.batch.item.json.builder.JsonItemReaderBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -17,15 +20,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
+import javax.sql.DataSource;
 
 @Slf4j
 @RequiredArgsConstructor
-//@Configuration
-public class JsonConfiguration {
-
+@Configuration
+public class JdbcCursorConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
+    private final DataSource dataSource;
 
     @Bean
     public Job batchJob(){
@@ -39,25 +43,29 @@ public class JsonConfiguration {
     @JobScope
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<User, User>chunk(3)
+                .<Customer, Customer>chunk(3)
                 .reader(customItemReader())
                 .writer(customItemWriter())
                 .build();
     }
     @Bean
-    public ItemReader<User> customItemReader(){
-        return new JsonItemReaderBuilder<User>()
-                .name("json1")
-                .resource(new ClassPathResource("/user4.json"))
-                .jsonObjectReader(new JacksonJsonObjectReader<>(User.class))
+    public ItemReader<Customer> customItemReader(){
+        return new JdbcCursorItemReaderBuilder<Customer>()
+                .name("jdbcCursor")
+                .fetchSize(3)
+                .sql("select id, firstName, lastName, birthdate from customer where firstName like ? order by lastName, firstName")
+                .beanRowMapper(Customer.class)
+                .queryArguments("%")
+                .dataSource(dataSource)
                 .build();
     }
 
 
     @Bean
-    public ItemWriter<User> customItemWriter(){
+    public ItemWriter<Customer> customItemWriter(){
         return items ->{
-            for(User u : items) log.info("write: {}", u);
+            for(Customer u : items) log.info("write: {}", u);
+            log.info("write: 청크단위 종료");
         };
     }
 
