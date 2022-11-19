@@ -1,4 +1,4 @@
-package jw.spring_batch.ex_chunk.itemReader.DB.jpa;
+package jw.spring_batch.ex_chunk.itemReader.DB.jdbc;
 
 import jw.spring_batch.ex_chunk.itemReader.Customer;
 import lombok.RequiredArgsConstructor;
@@ -9,31 +9,31 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.JpaCursorItemReader;
-import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder;
+import org.springframework.batch.item.database.JdbcPagingItemReader;
+import org.springframework.batch.item.database.Order;
+import org.springframework.batch.item.database.PagingQueryProvider;
+import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuilder;
+import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
-import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-//@Configuration
-public class JpaCursorConfiguration {
-
+@Configuration
+public class JdbcPagingConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final DataSource dataSource;
-    private final EntityManagerFactory entityManagerFactory;
 
     @Bean
-    public Job batchJob(){
+    public Job batchJob() throws Exception {
         return jobBuilderFactory.get("batchJob1")
                 .incrementer(new RunIdIncrementer())
                 .start(step1())
@@ -43,24 +43,41 @@ public class JpaCursorConfiguration {
 
     @Bean
     @JobScope
-    public Step step1() {
+    public Step step1() throws Exception {
         return stepBuilderFactory.get("step1")
-                .<Customer, Customer>chunk(3)
+                .<Customer, Customer>chunk(10)
                 .reader(customItemReader())
                 .writer(customItemWriter())
                 .build();
     }
     @Bean
-    public JpaCursorItemReader<Customer> customItemReader(){
+    public JdbcPagingItemReader<Customer> customItemReader() throws Exception {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("firstname", "A%");
 
-        return new JpaCursorItemReaderBuilder()
-                .name("JpaCursor")
-                .entityManagerFactory(entityManagerFactory)
-                .queryString("select c from Customer c where firstName like :firstname")
+        return new JdbcPagingItemReaderBuilder<Customer>()
+                .name("JdbcPaging")
+                .pageSize(10)
+                .dataSource(dataSource)
+                .rowMapper(new BeanPropertyRowMapper<>(Customer.class))
+                .queryProvider(createQueryProvider())
                 .parameterValues(parameters)
                 .build();
+    }
+
+    @Bean
+    public PagingQueryProvider createQueryProvider() throws Exception {
+        SqlPagingQueryProviderFactoryBean sqlQB = new SqlPagingQueryProviderFactoryBean();
+        sqlQB.setDataSource(dataSource);
+        sqlQB.setSelectClause("id, first_name, last_name, birth_date");
+        sqlQB.setFromClause("from customer");
+        sqlQB.setWhereClause("where first_name like :firstname");
+
+        Map<String, Order> sortKeys = new HashMap<>();
+        sortKeys.put("id", Order.ASCENDING);
+
+        sqlQB.setSortKeys(sortKeys);
+        return sqlQB.getObject();
     }
 
 
