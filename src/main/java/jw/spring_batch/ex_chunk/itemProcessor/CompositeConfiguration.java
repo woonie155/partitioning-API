@@ -9,6 +9,7 @@ import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.*;
+import org.springframework.batch.item.support.ClassifierCompositeItemProcessor;
 import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -16,7 +17,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -40,16 +43,17 @@ public class CompositeConfiguration {
     @JobScope
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<String, String>chunk(4)
-                .reader(new ItemReader<String>() {
-                    int i=0;
+                .<ProcessorInfo, ProcessorInfo>chunk(4)
+                .reader(new ItemReader<ProcessorInfo>() {
+                    int i=2;
                     @Override
-                    public String read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+                    public ProcessorInfo read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
                         i++;
-                        return i>10 ? null:"item";
+                        ProcessorInfo processorInfo = ProcessorInfo.builder().id(i).build();
+                        return i > 5 ? null:processorInfo;
                     }
                 })
-                .processor(customItemProcessor())
+                .processor(customItemProcessor2())
                 .writer(items -> log.info("w: {}",items))
                 .build();
     }
@@ -64,6 +68,18 @@ public class CompositeConfiguration {
         return new CompositeItemProcessorBuilder<>()
                 .delegates(itemProcessor)
                 .build();
+    }
+    @Bean
+    public ItemProcessor customItemProcessor2(){
+        ClassifierCompositeItemProcessor<ProcessorInfo, ProcessorInfo> processor = new ClassifierCompositeItemProcessor<>();
+        ProcessorClassifier<ProcessorInfo, ItemProcessor<?, ? extends ProcessorInfo>> classifier = new ProcessorClassifier<>();
+        Map<Integer, ItemProcessor<ProcessorInfo, ProcessorInfo>> processorMap = new HashMap<>();
+        processorMap.put(3, new CustomItemProcessor3());
+        processorMap.put(4, new CustomItemProcessor4());
+        processorMap.put(5, new CustomItemProcessor5());
+        classifier.setProcessorMap(processorMap);
+        processor.setClassifier(classifier);
+        return processor;
     }
 
     @Bean
