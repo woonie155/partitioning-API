@@ -1,6 +1,5 @@
-package jw.spring_batch.ex_repeat;
+package jw.spring_batch.ex_faultTolerant;
 
-import jw.spring_batch.ex_chunk.itemProcessor.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -9,9 +8,9 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.step.skip.LimitCheckingItemSkipPolicy;
+import org.springframework.batch.core.step.skip.SkipPolicy;
 import org.springframework.batch.item.*;
-import org.springframework.batch.item.support.ClassifierCompositeItemProcessor;
-import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.batch.repeat.CompletionPolicy;
 import org.springframework.batch.repeat.RepeatCallback;
 import org.springframework.batch.repeat.RepeatContext;
@@ -25,15 +24,14 @@ import org.springframework.batch.repeat.support.RepeatTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
 //@Configuration
-public class RepeatConfiguration {
+public class FaultTolerantConfiguration {
+
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -57,41 +55,36 @@ public class RepeatConfiguration {
                     @Override
                     public String read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
                         i++;
-                        return i>3? null:"item"+i;
+                        if(i==3){
+                            throw new IllegalStateException("illegalException");
+                        }
+                        return i>20? null:String.valueOf(i);
                     }
                 })
-                .processor(new ItemProcessor<String, String>() {
-                    RepeatTemplate repeatTemplate =new RepeatTemplate();
-                    @Override
-                    public String process(String item) throws Exception {
-//                        repeatTemplate.setCompletionPolicy(new SimpleCompletionPolicy(3));
-//                        repeatTemplate.setCompletionPolicy(new TimeoutTerminationPolicy(1000));
-                        CompositeCompletionPolicy compositeCompletionPolicy = new CompositeCompletionPolicy();
-                        CompletionPolicy[] completionPolicies
-                                = new CompletionPolicy[]{new SimpleCompletionPolicy(3), new TimeoutTerminationPolicy(1000)};
-                        compositeCompletionPolicy.setPolicies(completionPolicies);
-                        repeatTemplate.setCompletionPolicy(compositeCompletionPolicy);
-                        repeatTemplate.setExceptionHandler(simpleLimitExceptionHandler()); //예외 3번 허용
-                        repeatTemplate.iterate(new RepeatCallback() {
-                            @Override
-                            public RepeatStatus doInIteration(RepeatContext context) throws Exception {
-                                log.info("repeatTemplate{} 확인{}", item, context.getStartedCount());
-                                return RepeatStatus.CONTINUABLE;
-                            }
-                        });
-                        return item;
-                    }
-                })
-                .writer(items -> log.info("w: {}", items))
+                .processor(itemProcessor())
+                .writer(itemWriter())
+                .faultTolerant()
+//                .skipPolicy(customSkipPolicy())
+                .skip(SkipException.class)
+                .skipLimit(2)
                 .build();
     }
-
     @Bean
-    public ExceptionHandler simpleLimitExceptionHandler(){
-        return new SimpleLimitExceptionHandler(3);
+    public ItemProcessor itemProcessor(){
+        return new SkipItemProcessor();
     }
+    @Bean
+    public ItemWriter itemWriter(){
+        return new SkipItemWriter();
+    }
+    @Bean
+    public SkipPolicy customSkipPolicy(){ //커스텀 방식
+        Map<Class<? extends Throwable>, Boolean> exceptionClass = new HashMap<>();
+        exceptionClass.put(SkipException.class, true);
 
-
+        LimitCheckingItemSkipPolicy limitCheckingItemSkipPolicy = new LimitCheckingItemSkipPolicy(3, exceptionClass);
+        return limitCheckingItemSkipPolicy;
+    }
 
 
     @Bean
@@ -103,5 +96,4 @@ public class RepeatConfiguration {
                 })
                 .build();
     }
-
 }
