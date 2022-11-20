@@ -1,25 +1,23 @@
-package jw.spring_batch.ex_faultTolerant.retry;
+package jw.spring_batch.ex_faultTolerant.custom;
 
-import jw.spring_batch.ex_faultTolerant.SkipException;
-import jw.spring_batch.ex_faultTolerant.SkipItemProcessor;
-import jw.spring_batch.ex_faultTolerant.SkipItemWriter;
+import jw.spring_batch.ex_faultTolerant.retry.RetryException;
+import jw.spring_batch.ex_faultTolerant.retry.RetryItemProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.core.step.skip.LimitCheckingItemSkipPolicy;
-import org.springframework.batch.core.step.skip.SkipPolicy;
-import org.springframework.batch.item.*;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.RetryPolicy;
+import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,8 +26,8 @@ import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-//@Configuration
-public class RetryConfiguration {
+@Configuration
+public class Custom2Configuration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -46,16 +44,16 @@ public class RetryConfiguration {
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<String, String>chunk(5)
+                .<String, Customer5>chunk(5)
                 .reader(reader())
                 .processor(processor())
                 .writer(items -> items.forEach(it->System.out.println(it)))
                 .faultTolerant()
-                .skip(RetryException.class)
-                .skipLimit(2)
+//                .skip(RetryException.class)
+//                .skipLimit(2)
 //                .retryPolicy(retryPolicy())
-                .retry(RetryException.class)
-                .retryLimit(2)
+//                .retry(RetryException.class)
+//                .retryLimit(2)
                 .build();
     }
     @Bean
@@ -69,17 +67,24 @@ public class RetryConfiguration {
     }
     @Bean
     public ItemProcessor processor(){
-        return new RetryItemProcessor();
+        return new RetryItemProcessor2();
     }
 
 
     @Bean
-    public RetryPolicy retryPolicy(){
+    public RetryTemplate retryTemplate() {
         Map<Class<? extends Throwable>, Boolean> exceptionClass = new HashMap<>();
         exceptionClass.put(RetryException.class, true);
 
-        SimpleRetryPolicy simpleRetryPolicy = new SimpleRetryPolicy(2, exceptionClass);
-        return simpleRetryPolicy;
+        FixedBackOffPolicy backOffPolicy = new FixedBackOffPolicy();
+        backOffPolicy.setBackOffPeriod(2000);
+
+        SimpleRetryPolicy simpleRetryPolicy = new SimpleRetryPolicy(2,exceptionClass);
+
+        RetryTemplate retryTemplate = new RetryTemplate();
+        retryTemplate.setRetryPolicy(simpleRetryPolicy);
+        retryTemplate.setBackOffPolicy(backOffPolicy);
+        return retryTemplate;
     }
 
     @Bean
