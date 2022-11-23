@@ -26,7 +26,7 @@ import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-@Configuration
+//@Configuration
 public class SimpleJobConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
