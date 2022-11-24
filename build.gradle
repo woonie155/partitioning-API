@@ -32,6 +32,7 @@ dependencies {
 	implementation 'org.springframework:spring-oxm'
 	implementation group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.19'
 	implementation 'org.modelmapper:modelmapper:2.1.1'
+	implementation 'org.springframework.batch:spring-batch-integration'
 }
 
 tasks.named('test') {

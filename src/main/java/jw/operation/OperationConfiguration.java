@@ -18,7 +18,7 @@ import javax.sql.DataSource;
 
 @Slf4j
 @RequiredArgsConstructor
-@Configuration
+//@Configuration
 public class OperationConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
