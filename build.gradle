@@ -44,6 +44,6 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
-bootWar {
-	enabled = true
-}
+
+bootWar.enabled = false
+war.enabled = true
