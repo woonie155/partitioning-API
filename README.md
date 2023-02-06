@@ -3,6 +3,7 @@
 ## ＃Version<br>
 Spring boot 2.7.5<br>
 Spring batch 4.3.7<br>
+Quartz<br>
 JPA, MySQL
 
 
