@@ -7,6 +7,7 @@ plugins {
 group = 'jw'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
+apply plugin: 'war'
 
 configurations {
 	compileOnly {
@@ -37,8 +38,15 @@ dependencies {
 
 	implementation 'org.apache.httpcomponents:httpclient:4.5.13'
 
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 }
+bootWar.enabled = false
+war.enabled = true
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+bootWar{
+	archiveName("cicd-project.war")
 }

@@ -1,6 +1,6 @@
 package jw.spring_batch;
 
-import jw.simpleTest.SimpleJobConfiguration;
+import jw.study.simpleTest.SimpleJobConfiguration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
