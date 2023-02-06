@@ -52,5 +52,5 @@ tasks.named('test') {
 bootWar {
 	archiveBaseName = 'batch'
 	archiveFileName = 'batch.war'
-	archiveVersion = "0.0.1"
+	archiveVersion = "0.0.5"
 }
