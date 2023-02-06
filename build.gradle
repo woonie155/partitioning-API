@@ -19,6 +19,9 @@ repositories {
 	mavenCentral()
 }
 
+bootWar.enabled = false
+war.enabled = true
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
@@ -46,3 +49,4 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
