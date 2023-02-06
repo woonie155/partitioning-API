@@ -37,9 +37,13 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-quartz'
 
 	implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+	implementation 'org.springframework.boot:spring-boot-starter-tomcat'
 }
 
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+bootWar {
+	enabled = true
 }
