@@ -23,7 +23,7 @@ JPA, MySQL
     - **Processor**:  제품 유형에 따라 통신할 서버가 다르므로, 통신할 서버에 맞춰 아이템을 재구성한다.
     - **Writer**: 제품 유형에 따라 통신할 서버가 다르다. RestTemplate으로 통신하고, 응답 데이터를 txt 파일로 저장한다.
     
-**3. 스케줄링 **
+**3. 스케줄링 구현**
 - Spring Quartz를 이용해 File Job과 API Job을 실행
 
 <!--
